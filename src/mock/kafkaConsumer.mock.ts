@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ClientMetrics, KafkaConsumer as Consumer, Message, Metadata, TopicPartitionOffset, WatermarkOffsets } from "node-rdkafka";
 import { KafkaConsumerInterface } from "../lib/kafkaConsumerInterface";
 import { ConsumerRunConfig } from "../types";
 
 export class KafkaConsumerMock implements KafkaConsumerInterface {
     constructor(config: any, timeoutMs?: number) {
-        // -- Empty
+        return;
     }
 
     connect(topics): Promise<Metadata> {
