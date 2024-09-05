@@ -1,5 +1,5 @@
 {
-    "name": "kafkas",
+    "name": "@sweet-security/kafkas",
     "version": "0.0.1",
     "description": "An node-rdkafka decorator with promise/await API",
     "main": "dist/index.js",
@@ -10,7 +10,7 @@
         "lint": "eslint --fix ./src",
         "test": "npm run lint && echo \"Error: no test specified\" && exit 1",
         "release": "standard-version",
-        "prepare": "husky"
+        "precommit": "eslint src && tsc --noEmit"
     },
     "repository": {
         "type": "git",
@@ -28,7 +28,6 @@
         "eslint": "8.57.0",
         "eslint-config-prettier": "9.1.0",
         "eslint-plugin-import": "2.30.0",
-        "husky": "9.1.5",
         "prettier": "3.3.3",
         "standard-version": "9.5.0",
         "typescript": "5.5.4"
