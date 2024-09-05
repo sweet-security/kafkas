@@ -16,7 +16,7 @@ jobs:
                   cache: "npm"
             - run: npm ci
             - run: |
-                  LAST_TAG=`curl https://api.github.com/repos/swee-security/kafkas/tags | jq -r '.[0].name'`
+                  LAST_TAG=`curl https://api.github.com/repos/sweet-security/kafkas/tags | jq -r '.[0].name'`
                   npm install -g @sweet-security/kafkas
                   BODY=`create-github-message`
                   curl -f -X POST -H "Authorization: token ${{secrets.TOKEN}}" \
