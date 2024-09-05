@@ -8,7 +8,7 @@ export type ConsumerRunConfig = {
   autoCommitInterval?: number | null
   autoCommitThreshold?: number | null
   eachBatchAutoResolve?: boolean
-  partitionsConsumedConcurrently?: number
+  messageBatchSize?: number
   eachBatch?: EachBatchHandler
   eachMessage?: EachMessageHandler
 }
