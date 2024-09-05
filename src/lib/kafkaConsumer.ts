@@ -149,7 +149,7 @@ export class KafkaConsumer implements KafkaConsumerInterface {
   }
 
   run(config: ConsumerRunConfig) {
-    this.listen(config.partitionsConsumedConcurrently, config.autoCommit)
+    this.listen(config.messageBatchSize, config.autoCommit)
       .then(async (messages: Message[]) => {
         if (config.eachMessage) {
           for (const message of messages) {
