@@ -1,39 +1,48 @@
 {
-  "name": "kafkas",
-  "version": "0.0.1",
-  "description": "An node-rdkafka decorator with promise/await API",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build",
-    "lint": "eslint --fix ./src",
-    "test": "npm run lint && echo \"Error: no test specified\" && exit 1",
-    "release": "standard-version",
-    "prepare": "husky"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sweet-security/kafkas.git"
-  },
-  "dependencies": {
-    "node-rdkafka": "3.1.0"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "19.4.1",
-    "@commitlint/config-conventional": "19.4.1",
-    "@types/node": "22.5.4",
-    "@typescript-eslint/eslint-plugin": "8.4.0",
-    "@typescript-eslint/parser": "8.4.0",
-    "eslint": "8.57.0",
-    "eslint-config-prettier": "9.1.0",
-    "eslint-plugin-import": "2.30.0",
-    "husky": "9.1.5",
-    "prettier": "3.3.3",
-    "standard-version": "9.5.0",
-    "typescript": "5.5.4"
-  },
-  "files": [
-    "dist/**/*"
-  ]
+    "name": "kafkas",
+    "version": "0.0.1",
+    "description": "An node-rdkafka decorator with promise/await API",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "npm run build",
+        "lint": "eslint --fix ./src",
+        "test": "npm run lint && echo \"Error: no test specified\" && exit 1",
+        "release": "standard-version",
+        "prepare": "husky"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sweet-security/kafkas.git"
+    },
+    "dependencies": {
+        "node-rdkafka": "3.1.0"
+    },
+    "devDependencies": {
+        "@commitlint/cli": "19.4.1",
+        "@commitlint/config-conventional": "19.4.1",
+        "@types/node": "22.5.4",
+        "@typescript-eslint/eslint-plugin": "8.4.0",
+        "@typescript-eslint/parser": "8.4.0",
+        "eslint": "8.57.0",
+        "eslint-config-prettier": "9.1.0",
+        "eslint-plugin-import": "2.30.0",
+        "husky": "9.1.5",
+        "prettier": "3.3.3",
+        "standard-version": "9.5.0",
+        "typescript": "5.5.4"
+    },
+    "prettier": {
+        "trailingComma": "all",
+        "singleQuote": false,
+        "quoteProps": "as-needed",
+        "useTabs": false,
+        "semi": true,
+        "tabWidth": 4,
+        "printWidth": 150
+    },
+    "files": [
+        "dist/**/*"
+    ]
 }
