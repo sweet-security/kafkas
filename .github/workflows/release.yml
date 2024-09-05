@@ -16,8 +16,8 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: |
-        LAST_TAG=`curl https://api.github.com/repos/s3pweb/simple-kafka-promise/tags | jq -r '.[0].name'`
-        npm install -g @s3pweb/release-message-creator
+        LAST_TAG=`curl https://api.github.com/repos/swee-security/kafkas/tags | jq -r '.[0].name'`
+        npm install -g kafkas
         BODY=`create-github-message`
         curl -f -X POST -H "Authorization: token ${{secrets.TOKEN}}" \
           https://api.github.com/repos/${{github.repository}}/releases \

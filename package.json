@@ -1,7 +1,7 @@
 {
-  "name": "@s3pweb/simple-kafka-promise",
-  "version": "5.0.0",
-  "description": "A simple node-rdkafka lib with Promise.",
+  "name": "kafkas",
+  "version": "0.0.1",
+  "description": "An node-rdkafka decorator with promise/await API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/s3pweb/simple-kafka-promise.git"
+    "url": "git+https://github.com/sweet-security/kafkas.git"
   },
   "dependencies": {
     "node-rdkafka": "3.1.0"

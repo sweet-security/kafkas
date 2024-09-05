@@ -11,7 +11,7 @@ function later (delay) {
 const t = async () => {
   const consumer = new KafkaConsumer({ 'metadata.broker.list': '0.0.0.0:9094', 'group.id': 'test.group' }, 1000)
 
-  await consumer.connect(['s3pweb.test223'])
+  await consumer.connect(['kafkas.test'])
 
   console.log('wait a little')
 
