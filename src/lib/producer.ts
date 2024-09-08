@@ -1,5 +1,6 @@
 import { ClientMetrics, HighLevelProducer, Metadata } from "node-rdkafka";
 import { IProducer } from "./kafkaProducerInterface";
+import { ProducerRecord } from "../types";
 
 export class Producer implements IProducer {
     private connected: boolean;
@@ -58,9 +59,9 @@ export class Producer implements IProducer {
         });
     }
 
-    sendMessage(topic: string, message: any, partition: number, key: any): Promise<number> {
-        message = Buffer.from(JSON.stringify(message));
-        return this.sendBufferMessage(topic, message, partition, key);
+    send(record: ProducerRecord): Promise<number> {
+        const message = Buffer.from(JSON.stringify(record.message));
+        return this.sendBufferMessage(record.topic, message, record.partition, record.key);
     }
 
     sendBufferMessage(topic: string, message: any, partition: number, key: any): Promise<number> {

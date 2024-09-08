@@ -12,3 +12,23 @@ export type ConsumerRunConfig = {
     eachBatch?: EachBatchHandler;
     eachMessage?: EachMessageHandler;
 };
+
+export interface ProducerRecord {
+    topic: string;
+    message: Message;
+    ack?: number;
+    timeout?: number;
+    compression?: CompressionTypes;
+    partition?: number;
+    key?: string;
+}
+
+export enum CompressionTypes {
+    None = 0,
+    GZIP = 1,
+    Snappy = 2,
+    LZ4 = 3,
+    ZSTD = 4,
+}
+
+export { Message } from "node-rdkafka";
