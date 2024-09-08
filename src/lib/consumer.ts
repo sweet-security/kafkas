@@ -1,14 +1,14 @@
 import {
     ClientMetrics,
     KafkaConsumer,
-    Message,
+    Message as RdMessage,
     Metadata,
     SubscribeTopicList,
     TopicPartitionOffset,
     WatermarkOffsets,
 } from "node-rdkafka";
 import { IConsumer } from "./iConsumer";
-import { ConsumerRunConfig } from "../types";
+import { ConsumerRunConfig, IHeaders, Message } from "../types";
 
 export class Consumer implements IConsumer {
     private readonly consumer: KafkaConsumer;
@@ -103,7 +103,7 @@ export class Consumer implements IConsumer {
         });
     }
 
-    listen(numberOfMessages: number, autoCommit: boolean): Promise<Message[]> {
+    listen(numberOfMessages: number, autoCommit: boolean): Promise<RdMessage[]> {
         return new Promise((resolve, reject) => {
             this.consumer.consume(numberOfMessages, (err, messages) => {
                 if (err) {
@@ -137,19 +137,60 @@ export class Consumer implements IConsumer {
         });
     }
 
-    getConsumer(): KafkaConsumer | null {
+    getConsumer(): KafkaConsumer {
         return this.consumer;
+    }
+
+    //     export interface Message {
+    //     key?: Buffer | string | null
+    //     value: Buffer | string | null
+    //     partition?: number
+    //     headers?: IHeaders
+    //     timestamp?: string
+    // }
+
+    parseMessage(message: RdMessage): Message {
+        const parsedHeaders: IHeaders = {};
+        message.headers.forEach((header) => {
+            for (const key in header) {
+                const value = header[key];
+
+                if (parsedHeaders[key] === undefined) {
+                    // If key does not exist, add it directly
+                    parsedHeaders[key] = value;
+                } else {
+                    // If key exists, ensure the value is an array and then append
+                    if (!Array.isArray(parsedHeaders[key])) {
+                        parsedHeaders[key] = [parsedHeaders[key] as string | Buffer];
+                    }
+                    (parsedHeaders[key] as (string | Buffer)[]).push(value);
+                }
+            }
+        });
+
+        return {
+            key: message.key,
+            partition: message.partition,
+            headers: parsedHeaders,
+            timestamp: message.timestamp,
+            value: message.value,
+        };
+    }
+
+    parseMessages(messages: RdMessage[]): Message[] {
+        return messages.map(this.parseMessage);
     }
 
     run(config: ConsumerRunConfig) {
         this.listen(config.messageBatchSize, config.autoCommit)
-            .then(async (messages: Message[]) => {
+            .then(async (messages: RdMessage[]) => {
+                const parseMessages = this.parseMessages(messages);
                 if (config.eachMessage) {
-                    for (const message of messages) {
+                    for (const message of parseMessages) {
                         await config.eachMessage(message);
                     }
                 } else if (config.eachBatch) {
-                    await config.eachBatch(messages);
+                    await config.eachBatch(parseMessages);
                 }
             })
             .finally(() => {

@@ -23,8 +23,8 @@ const t = async () => {
 
         for (let index = 0; index < 10; index++) {
             try {
-                const p1 = await producer.sendMessage(topicName, { message: `p1:${index}` }, 0, null);
-                const p2 = await producer.sendMessage(topicName, { message: `p2:${index}` }, 0, null);
+                const p1 = await producer.send(topicName, { message: `p1:${index}` }, 0, null);
+                const p2 = await producer.send(topicName, { message: `p2:${index}` }, 0, null);
 
                 console.log(`Loop ${index}: p1 offset = ${p1}, p2 offset = ${p2}`);
             } catch (error) {

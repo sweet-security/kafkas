@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { IProducer } from "../lib/kafkaProducerInterface";
+import { IProducer } from "../lib/iProducer";
 import { ClientMetrics, Metadata } from "node-rdkafka";
 import { ProducerRecord } from "../types";
 
