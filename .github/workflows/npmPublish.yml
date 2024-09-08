@@ -19,5 +19,6 @@ jobs:
                   scope: '@sweet-security'
             - run: npm ci
             - run: npm publish --provenance --access public
+            - run: echo ${{secrets.SWEET_SECURITY_NPM_TOKEN}}
               env:
                   NODE_AUTH_TOKEN: ${{secrets.SWEET_SECURITY_NPM_TOKEN}}
