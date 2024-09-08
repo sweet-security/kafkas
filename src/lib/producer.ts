@@ -1,7 +1,8 @@
 import { ClientMetrics, HighLevelProducer, Metadata } from "node-rdkafka";
-import { KafkaProducerInterface } from "./kafkaProducerInterface";
+import { IProducer } from "./kafkaProducerInterface";
+import { ProducerRecord } from "../types";
 
-export class KafkaProducer implements KafkaProducerInterface {
+export class Producer implements IProducer {
     private connected: boolean;
     private readonly prefix: string;
     private readonly producer: HighLevelProducer;
@@ -28,7 +29,6 @@ export class KafkaProducer implements KafkaProducerInterface {
                 // Do nothing if we are already connected
                 resolve(null);
             } else {
-                // Fix for https://github.com/Blizzard/node-rdkafka/issues/600
                 this.producer.setValueSerializer((v) => v);
                 this.producer.setKeySerializer((v) => v);
 
@@ -59,9 +59,9 @@ export class KafkaProducer implements KafkaProducerInterface {
         });
     }
 
-    sendMessage(topic: string, message: any, partition: number, key: any): Promise<number> {
-        message = Buffer.from(JSON.stringify(message));
-        return this.sendBufferMessage(topic, message, partition, key);
+    send(record: ProducerRecord): Promise<number> {
+        const message = Buffer.from(JSON.stringify(record.message));
+        return this.sendBufferMessage(record.topic, message, record.partition, record.key);
     }
 
     sendBufferMessage(topic: string, message: any, partition: number, key: any): Promise<number> {

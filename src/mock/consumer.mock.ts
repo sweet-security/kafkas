@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ClientMetrics, KafkaConsumer as Consumer, Message, Metadata, TopicPartitionOffset, WatermarkOffsets } from "node-rdkafka";
-import { KafkaConsumerInterface } from "../lib/kafkaConsumerInterface";
+import { ClientMetrics, KafkaConsumer, Message, Metadata, TopicPartitionOffset, WatermarkOffsets } from "node-rdkafka";
+import { IConsumer } from "../lib/iConsumer";
 import { ConsumerRunConfig } from "../types";
 
-export class KafkaConsumerMock implements KafkaConsumerInterface {
+export class ConsumerMock implements IConsumer {
     constructor(config: any, timeoutMs?: number) {
         return;
     }
@@ -40,7 +40,7 @@ export class KafkaConsumerMock implements KafkaConsumerInterface {
         return Promise.resolve({ highOffset: 100, lowOffset: 0 });
     }
 
-    getConsumer(): Consumer {
+    getConsumer(): KafkaConsumer {
         return null;
     }
 

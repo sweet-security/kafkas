@@ -16,6 +16,7 @@
         "type": "git",
         "url": "git+https://github.com/sweet-security/kafkas.git"
     },
+    "license": "MIT",
     "dependencies": {
         "node-rdkafka": "3.1.0"
     },

@@ -1,17 +1,17 @@
 import {
     ClientMetrics,
-    KafkaConsumer as Consumer,
+    KafkaConsumer,
     Message,
     Metadata,
     SubscribeTopicList,
     TopicPartitionOffset,
     WatermarkOffsets,
 } from "node-rdkafka";
-import { KafkaConsumerInterface } from "./kafkaConsumerInterface";
+import { IConsumer } from "./iConsumer";
 import { ConsumerRunConfig } from "../types";
 
-export class KafkaConsumer implements KafkaConsumerInterface {
-    private readonly consumer: Consumer;
+export class Consumer implements IConsumer {
+    private readonly consumer: KafkaConsumer;
     private readonly consumeTimeout: number;
 
     /**
@@ -27,7 +27,7 @@ export class KafkaConsumer implements KafkaConsumerInterface {
             ...config,
         };
 
-        this.consumer = new Consumer(consumerConfig, {
+        this.consumer = new KafkaConsumer(consumerConfig, {
             "auto.offset.reset": "earliest",
         });
     }
@@ -137,7 +137,7 @@ export class KafkaConsumer implements KafkaConsumerInterface {
         });
     }
 
-    getConsumer(): Consumer {
+    getConsumer(): KafkaConsumer | null {
         return this.consumer;
     }
 

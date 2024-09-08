@@ -1,12 +1,12 @@
 import { ClientMetrics, KafkaConsumer as Consumer, Message, Metadata, TopicPartitionOffset, WatermarkOffsets } from "node-rdkafka";
 import { ConsumerRunConfig } from "../types";
 
-export interface KafkaConsumerInterface {
+export interface IConsumer {
     /**
      * Connect consumer to kafka and subscribe to given topics
      * @param topics Array of topics
      */
-    connect(topics): Promise<Metadata>;
+    connect(topics: string[]): Promise<Metadata>;
 
     /**
      * Disconnect the consumer from Kafka.

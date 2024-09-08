@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { KafkaProducerInterface } from "../lib/kafkaProducerInterface";
+import { IProducer } from "../lib/kafkaProducerInterface";
 import { ClientMetrics, Metadata } from "node-rdkafka";
+import { ProducerRecord } from "../types";
 
-export class KafkaProducerMock implements KafkaProducerInterface {
+export class ProducerMock implements IProducer {
     constructor(config: any, topicPrefix?: string) {
         return;
     }
@@ -15,7 +16,7 @@ export class KafkaProducerMock implements KafkaProducerInterface {
         return Promise.resolve(null);
     }
 
-    sendMessage(topic: string, message: any, partition: number, key: any): Promise<number> {
+    send(record: ProducerRecord): Promise<number> {
         return Promise.resolve(0);
     }
 

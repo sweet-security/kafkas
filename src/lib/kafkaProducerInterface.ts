@@ -1,6 +1,7 @@
 import { ClientMetrics, Metadata } from "node-rdkafka";
+import { ProducerRecord } from "../types";
 
-export interface KafkaProducerInterface {
+export interface IProducer {
     /**
      * Connect the producer to kafka, will return broker's metadata or nothing if already connected.
      *
@@ -18,14 +19,15 @@ export interface KafkaProducerInterface {
     /**
      * Send a message to Kafka and await ack.
      *
-     * @param topic Topic to send message to.
-     * If `kafka.producer.topicsPrefix` exist in config, the full topic will be `kafka.producer.topicsPrefix + topic`
-     * @param message Message to be sent (will be parsed with `JSON.stringify(...)` before).
-     * @param partition Topic partition.
-     * @param key Kafka key to be sent along the message.
+     * @param record -
+     *  -  topic: Topic to send message to.
+     *      If `kafka.producer.topicsPrefix` exist in config, the full topic will be `kafka.producer.topicsPrefix + topic`
+     *  -  message: Message to be sent (will be parsed with `JSON.stringify(...)` before).
+     *  -  partition: Topic partition.
+     *  -  key: Kafka key to be sent along the message.
      * @return Message's offset
      */
-    sendMessage(topic: string, message: any, partition: number, key: any): Promise<number>;
+    send(record: ProducerRecord): Promise<number>;
 
     /**
      * Send a buffer message to Kafka and await ack.

@@ -1,6 +1,6 @@
 import { ClientMetrics, Metadata, Producer } from "node-rdkafka";
 
-export class KafkaNProducer {
+export class NProducer {
     private connected: boolean;
     private indexMessage: number;
     private readonly prefix: string;
