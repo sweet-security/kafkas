@@ -1,4 +1,16 @@
-import { Message } from "node-rdkafka";
+export type MessageHeader = { [key: string]: string | Buffer };
+
+export interface IHeaders {
+    [key: string]: Buffer | string | (Buffer | string)[] | undefined;
+}
+
+export interface Message {
+    key: Buffer | string | null;
+    value: Buffer | string | null;
+    partition?: number;
+    headers?: IHeaders;
+    timestamp?: number;
+}
 
 export type EachBatchHandler = (payload: Message[]) => Promise<void>;
 export type EachMessageHandler = (payload: Message) => Promise<void>;
@@ -15,12 +27,12 @@ export type ConsumerRunConfig = {
 
 export interface ProducerRecord {
     topic: string;
-    message: Message;
+    messages: Message[];
     ack?: number;
     timeout?: number;
     compression?: CompressionTypes;
     partition?: number;
-    key?: string;
+    key?: string | null;
 }
 
 export enum CompressionTypes {

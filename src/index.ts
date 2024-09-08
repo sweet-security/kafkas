@@ -6,5 +6,4 @@ export { NProducer } from "./lib/nProducer";
 export { ConsumerMock } from "./mock/consumer.mock";
 export { ProducerMock } from "./mock/producer.mock";
 
-export * from "./types";
-export { Message } from "node-rdkafka";
+export { IHeaders, Message, EachBatchHandler, EachMessageHandler, ConsumerRunConfig, CompressionTypes, ProducerRecord } from "./types";

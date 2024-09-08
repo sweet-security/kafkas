@@ -1,6 +1,6 @@
-import { ClientMetrics, HighLevelProducer, Metadata } from "node-rdkafka";
-import { IProducer } from "./kafkaProducerInterface";
-import { ProducerRecord } from "../types";
+import { ClientMetrics, HighLevelProducer, Message as RdMessage, Metadata } from "node-rdkafka";
+import { IProducer } from "./iProducer";
+import { IHeaders, Message, MessageHeader, ProducerRecord } from "../types";
 
 export class Producer implements IProducer {
     private connected: boolean;
@@ -59,24 +59,62 @@ export class Producer implements IProducer {
         });
     }
 
-    send(record: ProducerRecord): Promise<number> {
-        const message = Buffer.from(JSON.stringify(record.message));
-        return this.sendBufferMessage(record.topic, message, record.partition, record.key);
+    serializeMessage(message: Message): Partial<RdMessage> {
+        const messageHeadersArray: MessageHeader[] = [];
+
+        for (const key in message.headers) {
+            const value = message.headers[key];
+
+            if (value === undefined) {
+                continue; // Skip undefined values
+            }
+
+            if (Array.isArray(value)) {
+                // If the value is an array, create a MessageHeader for each item
+                value.forEach((v) => {
+                    messageHeadersArray.push({ [key]: v });
+                });
+            } else {
+                // If the value is a single string or Buffer, create a single MessageHeader
+                messageHeadersArray.push({ [key]: value });
+            }
+        }
+
+        return {
+            key: message.key,
+            partition: message.partition,
+            headers: messageHeadersArray,
+            timestamp: message.timestamp,
+            value: (typeof message.value === "string")? Buffer.from(message.value) : message.value
+        };
     }
 
-    sendBufferMessage(topic: string, message: any, partition: number, key: any): Promise<number> {
+    async send(record: ProducerRecord): Promise<any> {
+        return record.messages.map((messageToSend) => this.sendBufferMessage(record.topic, messageToSend));
+    }
+
+    async sendBufferMessage(topic: string, message: Message): Promise<number> {
         return new Promise((resolve, reject) => {
+            const serializedMessage = this.serializeMessage(message);
             // Create full topic
             const fullTopic = this.prefix + topic;
 
             // Send message to kafka
-            this.producer.produce(fullTopic, partition, message, key, Date.now(), (err, offset) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(offset);
-                }
-            });
+            this.producer.produce(
+                fullTopic,
+                serializedMessage.partition,
+                serializedMessage.value,
+                serializedMessage.key,
+                Date.now(),
+                serializedMessage.headers,
+                (err, offset) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(offset);
+                    }
+                },
+            );
         });
     }
 
