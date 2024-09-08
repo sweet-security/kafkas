@@ -30,5 +30,3 @@ export enum CompressionTypes {
     LZ4 = 3,
     ZSTD = 4,
 }
-
-export { Message } from "node-rdkafka";
