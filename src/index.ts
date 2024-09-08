@@ -1,7 +1,7 @@
-export { KafkaProducer } from "./lib/kafkaHighLevelProducer";
-export { KafkaConsumer } from "./lib/kafkaConsumer";
+export { Producer } from "./lib/producer";
+export { Consumer } from "./lib/consumer";
 
-export { KafkaNProducer } from "./lib/kafkaNProducer";
+export { NProducer } from "./lib/nProducer";
 
-export { KafkaConsumerMock } from "./mock/kafkaConsumer.mock";
-export { KafkaProducerMock } from "./mock/kafkaProducer.mock";
+export { ConsumerMock } from "./mock/consumer.mock";
+export { ProducerMock } from "./mock/producer.mock";

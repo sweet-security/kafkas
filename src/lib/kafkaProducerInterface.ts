@@ -1,6 +1,6 @@
 import { ClientMetrics, Metadata } from "node-rdkafka";
 
-export interface KafkaProducerInterface {
+export interface IProducer {
     /**
      * Connect the producer to kafka, will return broker's metadata or nothing if already connected.
      *

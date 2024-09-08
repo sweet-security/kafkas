@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { KafkaProducerInterface } from "../lib/kafkaProducerInterface";
+import { IProducer } from "../lib/kafkaProducerInterface";
 import { ClientMetrics, Metadata } from "node-rdkafka";
 
-export class KafkaProducerMock implements KafkaProducerInterface {
+export class ProducerMock implements IProducer {
     constructor(config: any, topicPrefix?: string) {
         return;
     }

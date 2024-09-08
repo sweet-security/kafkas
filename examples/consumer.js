@@ -1,6 +1,6 @@
 "use strict";
 
-const KafkaConsumer = require("../dist/index").KafkaConsumer;
+const KafkaConsumer = require("../dist/index").Consumer;
 
 function later(delay) {
     return new Promise(function (resolve) {

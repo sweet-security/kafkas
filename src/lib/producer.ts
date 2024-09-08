@@ -1,7 +1,7 @@
 import { ClientMetrics, HighLevelProducer, Metadata } from "node-rdkafka";
-import { KafkaProducerInterface } from "./kafkaProducerInterface";
+import { IProducer } from "./kafkaProducerInterface";
 
-export class KafkaProducer implements KafkaProducerInterface {
+export class Producer implements IProducer {
     private connected: boolean;
     private readonly prefix: string;
     private readonly producer: HighLevelProducer;
@@ -28,7 +28,6 @@ export class KafkaProducer implements KafkaProducerInterface {
                 // Do nothing if we are already connected
                 resolve(null);
             } else {
-                // Fix for https://github.com/Blizzard/node-rdkafka/issues/600
                 this.producer.setValueSerializer((v) => v);
                 this.producer.setKeySerializer((v) => v);
 
