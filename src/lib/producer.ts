@@ -1,6 +1,6 @@
 import { ClientMetrics, HighLevelProducer, Message as RdMessage, Metadata } from "node-rdkafka";
 import { IProducer } from "./iProducer";
-import { IHeaders, Message, MessageHeader, ProducerRecord } from "../types";
+import { Message, MessageHeader, ProducerRecord } from "../types";
 
 export class Producer implements IProducer {
     private connected: boolean;
