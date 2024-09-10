@@ -1,5 +1,6 @@
 import {
     ClientMetrics,
+    ConsumerGlobalConfig,
     KafkaConsumer,
     Message as RdMessage,
     Metadata,
@@ -15,13 +16,14 @@ export class Consumer implements IConsumer {
     private readonly consumeTimeout: number;
 
     /**
-     * @param config Node-rdkafka configuration object. Minimum: `{ "metadata.broker.list": "0.0.0.0:9094", "group.id": "test.group" }`
+     * @param config Node-rdkafka configuration object.
+     *               Minimum: `{ "metadata.broker.list": "0.0.0.0:9094,0.0.0.0:9092", "group.id": "test.group" }`
      * @param timeoutMs Consume timeout in ms
      */
-    constructor(config: any, timeoutMs?: number) {
-        this.consumeTimeout = timeoutMs ? timeoutMs : 1000;
+    constructor(config: ConsumerGlobalConfig, timeoutMs?: number) {
+        this.consumeTimeout = timeoutMs ?? 1000;
 
-        const consumerConfig = {
+        const consumerConfig: ConsumerGlobalConfig = {
             "enable.auto.commit": false,
             "socket.keepalive.enable": true,
             ...config,
@@ -141,17 +143,9 @@ export class Consumer implements IConsumer {
         return this.consumer;
     }
 
-    //     export interface Message {
-    //     key?: Buffer | string | null
-    //     value: Buffer | string | null
-    //     partition?: number
-    //     headers?: IHeaders
-    //     timestamp?: string
-    // }
-
     parseMessage(message: RdMessage): Message {
         const parsedHeaders: IHeaders = {};
-        message.headers.forEach((header) => {
+        message.headers?.forEach((header) => {
             for (const key in header) {
                 const value = header[key];
 
