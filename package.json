@@ -1,6 +1,6 @@
 {
     "name": "@sweet-security/kafkas",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "An node-rdkafka decorator with promise/await API",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
