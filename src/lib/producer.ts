@@ -1,6 +1,7 @@
 import { ClientMetrics, HighLevelProducer, Message as RdMessage, Metadata } from "node-rdkafka";
 import { IProducer } from "./iProducer";
 import { Message, MessageHeader, ProducerRecord } from "../types";
+import { ProducerGlobalConfig } from "node-rdkafka/config";
 
 export class Producer implements IProducer {
     private connected: boolean;
@@ -11,7 +12,7 @@ export class Producer implements IProducer {
      * @param config Node-rdkafka configuration object. Minimum: `{ "metadata.broker.list": "0.0.0.0:9094" }`
      * @param topicPrefix Prefix to add before each topic name
      */
-    constructor(config: any, topicPrefix?: string) {
+    constructor(config: ProducerGlobalConfig, topicPrefix?: string) {
         this.connected = false;
         this.prefix = topicPrefix ? topicPrefix : "";
 
