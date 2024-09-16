@@ -1,5 +1,10 @@
 const { AssignerProtocol } = require('../../../../index')
-const { hasImbalance, unloadOverloadedMembers, getUnassignedPartitions, getMemberAssignedPartitionCount } = require('./utils')
+const {
+  hasImbalance,
+  unloadOverloadedMembers,
+  getUnassignedPartitions,
+  getMemberAssignedPartitionCount,
+} = require('./utils')
 const { minBy, cloneDeep } = require('lodash')
 
 /**
@@ -11,7 +16,7 @@ module.exports = ({ cluster }) => ({
   version: 0,
   async assign({ members, topics, currentAssignment }) {
     const membersCount = members.length
-    const assignment = currentAssignment
+    const assignment = cloneDeep(currentAssignment)
 
     // // Initialize assignment map for each member
     for (const member of members) {
@@ -36,10 +41,10 @@ module.exports = ({ cluster }) => ({
       unloadOverloadedMembers(assignment, avgPartitions)
     }
     // Step 2: If not already assigned, distribute using round-robin balancing
-    const unassignedPartitions = getUnassignedPartitions(groupAssigment, topicsPartitions)
+    const unassignedPartitions = getUnassignedPartitions(currentAssignment, topicsPartitions)
     for (const unassignedPartition of unassignedPartitions) {
       const memberWithLeastPartitions = minBy(members, member =>
-        getMemberAssignedPartitionCount(groupAssigment, member.memberId)
+        getMemberAssignedPartitionCount(currentAssignment, member.memberId)
       )?.memberId
 
       if (!memberWithLeastPartitions) {

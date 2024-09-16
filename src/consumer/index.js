@@ -6,7 +6,7 @@ const Runner = require('./runner')
 const { events, wrap: wrapEvent, unwrap: unwrapEvent } = require('./instrumentationEvents')
 const InstrumentationEventEmitter = require('../instrumentation/emitter')
 const { KafkaJSNonRetriableError } = require('../errors')
-const { roundRobin } = require('./assigners')
+const { roundRobin, stickyCooperative } = require('./assigners')
 const { EARLIEST_OFFSET, LATEST_OFFSET } = require('../constants')
 const ISOLATION_LEVEL = require('../protocol/isolationLevel')
 const sharedPromiseTo = require('../utils/sharedPromiseTo')
@@ -51,7 +51,7 @@ module.exports = ({
   groupId,
   retry,
   logger: rootLogger,
-  partitionAssigners = [roundRobin],
+  partitionAssigners = [roundRobin, stickyCooperative],
   sessionTimeout = 30000,
   rebalanceTimeout = 60000,
   heartbeatInterval = 3000,
@@ -428,14 +428,14 @@ module.exports = ({
 
   /** @type {import("../../types").Consumer["getCurrentGroupAssigment"]} */
   const getCurrentGroupAssigment = async () => {
-    const groupAssigment = {};
-    const groupDescription = await describeGroup();
-    groupDescription.members.forEach((member) => {
-      const memberAssignment = AssignerProtocol.MemberAssignment.decode(member.memberAssignment);
+    const groupAssigment = {}
+    const groupDescription = await describeGroup()
+    groupDescription.members.forEach(member => {
+      const memberAssignment = AssignerProtocol.MemberAssignment.decode(member.memberAssignment)
       if (memberAssignment) {
-        groupAssigment[member.memberId] = memberAssignment.assignment;
+        groupAssigment[member.memberId] = memberAssignment.assignment
       }
-    });
+    })
   }
 
   /**
