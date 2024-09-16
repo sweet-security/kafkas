@@ -221,7 +221,7 @@ export type GroupState = { name: string; metadata: Buffer }
 export type Assigner = {
   name: string
   version: number
-  assign(group: { members: GroupMember[]; topics: string[] }): Promise<GroupMemberAssignment[]>
+  assign(group: { members: GroupMember[]; topics: string[], currentAssignment: Assignment }): Promise<GroupMemberAssignment[]>
   protocol(subscription: { topics: string[] }): GroupState
 }
 
@@ -1110,7 +1110,6 @@ export type Consumer = {
     listener: (event: InstrumentationEvent<any>) => void
   ): RemoveInstrumentationEventListener<typeof eventName>
   logger(): Logger
-  rejoin(): void
   readonly events: ConsumerEvents
 }
 

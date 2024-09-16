@@ -18,6 +18,7 @@ const {
   KafkaJSStaleTopicMetadataAssignment,
   isRebalancing,
 } = require('../errors')
+const { AssignerProtocol } = require('../../index')
 
 const { keys } = Object
 
@@ -217,7 +218,17 @@ module.exports = class ConsumerGroup {
       }
 
       await this.cluster.refreshMetadata()
-      assignment = await assigner.assign({ members, topics: topicsSubscribed })
+
+      const currentAssignment = {}
+      const groupDescription = await this.coordinator.describeGroup()
+      groupDescription.members.forEach(member => {
+        const memberAssignment = AssignerProtocol.MemberAssignment.decode(member.memberAssignment)
+        if (memberAssignment) {
+          currentAssignment[member.memberId] = memberAssignment.assignment
+        }
+      })
+
+      assignment = await assigner.assign({ members, topics: topicsSubscribed, currentAssignment })
 
       this.logger.debug('Group assignment', {
         groupId,

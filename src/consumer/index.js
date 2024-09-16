@@ -10,6 +10,7 @@ const { roundRobin } = require('./assigners')
 const { EARLIEST_OFFSET, LATEST_OFFSET } = require('../constants')
 const ISOLATION_LEVEL = require('../protocol/isolationLevel')
 const sharedPromiseTo = require('../utils/sharedPromiseTo')
+const { AssignerProtocol } = require('../../index')
 
 const { keys, values } = Object
 const { CONNECT, DISCONNECT, STOP, CRASH } = events
@@ -43,7 +44,7 @@ const specialOffsets = [
  * @param {InstrumentationEventEmitter} [params.instrumentationEmitter]
  * @param {number} params.metadataMaxAge
  *
- * @returns {{resume: (topics: Array<{topic: string; partitions?: number[]}>) => void, disconnect: () => Promise<void>, describeGroup: () => Promise<GroupDescription>, paused: () => TopicPartitions[], subscribe: (subscription: (ConsumerSubscribeTopics | ConsumerSubscribeTopic)) => Promise<void>, logger: (function(): Logger), run: (config?: ConsumerRunConfig) => Promise<void>, seek: (topicPartitionOffset: TopicPartitionOffset) => void, pause: (topics: Array<{topic: string; partitions?: number[]}>) => void, stop: () => Promise<void>, rejoin: () => void, commitOffsets: (topicPartitions: Array<TopicPartitionOffsetAndMetadata>) => Promise<void>, connect: () => Promise<void>, events: ConsumerEvents, on: {(eventName: ConsumerEvents["HEARTBEAT"], listener: (event: ConsumerHeartbeatEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["COMMIT_OFFSETS"], listener: (event: ConsumerCommitOffsetsEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["GROUP_JOIN"], listener: (event: ConsumerGroupJoinEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["FETCH_START"], listener: (event: ConsumerFetchStartEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["FETCH"], listener: (event: ConsumerFetchEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["START_BATCH_PROCESS"], listener: (event: ConsumerStartBatchProcessEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["END_BATCH_PROCESS"], listener: (event: ConsumerEndBatchProcessEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["CONNECT"], listener: (event: ConnectEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["DISCONNECT"], listener: (event: DisconnectEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["STOP"], listener: (event: InstrumentationEvent<null>) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["CRASH"], listener: (event: ConsumerCrashEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REBALANCING"], listener: (event: ConsumerRebalancingEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["RECEIVED_UNSUBSCRIBED_TOPICS"], listener: (event: ConsumerReceivedUnsubcribedTopicsEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REQUEST"], listener: (event: RequestEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REQUEST_TIMEOUT"], listener: (event: RequestTimeoutEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REQUEST_QUEUE_SIZE"], listener: (event: RequestQueueSizeEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ValueOf<ConsumerEvents>, listener: (event: InstrumentationEvent<any>) => void): RemoveInstrumentationEventListener<typeof eventName>}}}
+ * @returns {{resume: (topics: Array<{topic: string; partitions?: number[]}>) => void, disconnect: () => Promise<void>, describeGroup: () => Promise<GroupDescription>, paused: () => TopicPartitions[], subscribe: (subscription: (ConsumerSubscribeTopics | ConsumerSubscribeTopic)) => Promise<void>, getCurrentGroupAssigment: *, logger: (function(): Logger), run: (config?: ConsumerRunConfig) => Promise<void>, seek: (topicPartitionOffset: TopicPartitionOffset) => void, pause: (topics: Array<{topic: string; partitions?: number[]}>) => void, stop: () => Promise<void>, commitOffsets: (topicPartitions: Array<TopicPartitionOffsetAndMetadata>) => Promise<void>, connect: () => Promise<void>, events: ConsumerEvents, on: {(eventName: ConsumerEvents["HEARTBEAT"], listener: (event: ConsumerHeartbeatEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["COMMIT_OFFSETS"], listener: (event: ConsumerCommitOffsetsEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["GROUP_JOIN"], listener: (event: ConsumerGroupJoinEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["FETCH_START"], listener: (event: ConsumerFetchStartEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["FETCH"], listener: (event: ConsumerFetchEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["START_BATCH_PROCESS"], listener: (event: ConsumerStartBatchProcessEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["END_BATCH_PROCESS"], listener: (event: ConsumerEndBatchProcessEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["CONNECT"], listener: (event: ConnectEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["DISCONNECT"], listener: (event: DisconnectEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["STOP"], listener: (event: InstrumentationEvent<null>) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["CRASH"], listener: (event: ConsumerCrashEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REBALANCING"], listener: (event: ConsumerRebalancingEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["RECEIVED_UNSUBSCRIBED_TOPICS"], listener: (event: ConsumerReceivedUnsubcribedTopicsEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REQUEST"], listener: (event: RequestEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REQUEST_TIMEOUT"], listener: (event: RequestTimeoutEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ConsumerEvents["REQUEST_QUEUE_SIZE"], listener: (event: RequestQueueSizeEvent) => void): RemoveInstrumentationEventListener<typeof eventName>; (eventName: ValueOf<ConsumerEvents>, listener: (event: InstrumentationEvent<any>) => void): RemoveInstrumentationEventListener<typeof eventName>}}}
  */
 module.exports = ({
   cluster,
@@ -425,6 +426,18 @@ module.exports = ({
     })
   }
 
+  /** @type {import("../../types").Consumer["getCurrentGroupAssigment"]} */
+  const getCurrentGroupAssigment = async () => {
+    const groupAssigment = {};
+    const groupDescription = await describeGroup();
+    groupDescription.members.forEach((member) => {
+      const memberAssignment = AssignerProtocol.MemberAssignment.decode(member.memberAssignment);
+      if (memberAssignment) {
+        groupAssigment[member.memberId] = memberAssignment.assignment;
+      }
+    });
+  }
+
   /**
    * @type {import("../../types").Consumer["pause"]}
    * @param topicPartitions
@@ -503,14 +516,6 @@ module.exports = ({
    */
   const getLogger = () => logger
 
-  /** @type {import("../../types").Consumer["rejoin"]} */
-  const rejoin = () => {
-    if (!consumerGroup) {
-      return
-    }
-    consumerGroup.joinAndSync()
-  }
-
   return {
     connect,
     disconnect,
@@ -520,12 +525,12 @@ module.exports = ({
     commitOffsets,
     seek,
     describeGroup,
+    getCurrentGroupAssigment,
     pause,
     paused,
     resume,
     on,
     events,
     logger: getLogger,
-    rejoin
   }
 }
