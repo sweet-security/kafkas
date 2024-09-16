@@ -1,51 +1,83 @@
-"use strict";
+const fs = require('fs')
+const ip = require('ip')
 
-const KafkaConsumer = require("../dist/index").Consumer;
+const { Kafka, logLevel } = require('../index')
+const PrettyConsoleLogger = require('./prettyConsoleLogger')
 
-function later(delay) {
-    return new Promise(function (resolve) {
-        setTimeout(resolve, delay);
-    });
+const host = process.env.HOST_IP || ip.address()
+
+const kafka = new Kafka({
+  logLevel: logLevel.INFO,
+  logCreator: PrettyConsoleLogger,
+  brokers: [`${host}:9094`, `${host}:9097`, `${host}:9100`],
+  clientId: 'example-consumer',
+  ssl: {
+    servername: 'localhost',
+    rejectUnauthorized: false,
+    ca: [fs.readFileSync('./testHelpers/certs/cert-signed', 'utf-8')],
+  },
+  sasl: {
+    mechanism: 'plain',
+    username: 'test',
+    password: 'testtest',
+  },
+})
+
+const topic = 'topic-test'
+const consumer = kafka.consumer({ groupId: 'test-group' })
+
+let msgNumber = 0
+const run = async () => {
+  await consumer.connect()
+  await consumer.subscribe({ topic, fromBeginning: true })
+  await consumer.run({
+    // eachBatch: async ({ batch }) => {
+    //   console.log(batch)
+    // },
+    eachMessage: async ({ topic, partition, message }) => {
+      msgNumber++
+      kafka.logger().info('Message processed', {
+        topic,
+        partition,
+        offset: message.offset,
+        timestamp: message.timestamp,
+        headers: Object.keys(message.headers).reduce(
+          (headers, key) => ({
+            ...headers,
+            [key]: message.headers[key].toString(),
+          }),
+          {}
+        ),
+        key: message.key.toString(),
+        value: message.value.toString(),
+        msgNumber,
+      })
+    },
+  })
 }
 
-const t = async () => {
-    const consumer = new KafkaConsumer({ "metadata.broker.list": "0.0.0.0:9094", "group.id": "test.group" }, 1000);
+run().catch(e => kafka.logger().error(`[example/consumer] ${e.message}`, { stack: e.stack }))
 
-    await consumer.connect(["kafkas.test"]);
+const errorTypes = ['unhandledRejection', 'uncaughtException']
+const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2']
 
-    console.log("wait a little");
-
-    await later(200);
-
-    let previousPartition = 0;
-    let cpt = 0;
-
-    while (cpt < 200) {
-        const messages = await consumer.listen(10, true);
-
-        for (const message of messages) {
-            cpt++;
-
-            const txt = `${message.partition} - ${message.offset} * `;
-
-            if (previousPartition !== message.partition) {
-                previousPartition = message.partition;
-                console.log(txt);
-            } else {
-                process.stdout.write(txt);
-            }
-        }
-
-        console.log(cpt);
-
-        console.log("----------------------------");
+errorTypes.map(type => {
+  process.on(type, async e => {
+    try {
+      kafka.logger().info(`process.on ${type}`)
+      kafka.logger().error(e.message, { stack: e.stack })
+      await consumer.disconnect()
+      process.exit(0)
+    } catch (_) {
+      process.exit(1)
     }
+  })
+})
 
-    console.log("RECEIVE ALL EVENTS");
-
-    await later(200);
-
-    await consumer.disconnect();
-};
-
-t();
+signalTraps.map(type => {
+  process.once(type, async () => {
+    console.log('')
+    kafka.logger().info('[example/consumer] disconnecting')
+    await consumer.disconnect()
+  })
+})

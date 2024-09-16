@@ -1,46 +1,94 @@
-"use strict";
+const fs = require('fs')
+const ip = require('ip')
 
-const KafkaProducer = require("../dist/index").Producer;
+const { Kafka, CompressionTypes, logLevel } = require('../index')
+const PrettyConsoleLogger = require('./prettyConsoleLogger')
 
-function later(delay) {
-    return new Promise(function (resolve) {
-        setTimeout(resolve, delay);
-    });
+const host = process.env.HOST_IP || ip.address()
+
+const kafka = new Kafka({
+  logLevel: logLevel.INFO,
+  logCreator: PrettyConsoleLogger,
+  brokers: [`${host}:9094`, `${host}:9097`, `${host}:9100`],
+  clientId: 'example-producer',
+  ssl: {
+    servername: 'localhost',
+    rejectUnauthorized: false,
+    ca: [fs.readFileSync('./testHelpers/certs/cert-signed', 'utf-8')],
+  },
+  sasl: {
+    mechanism: 'plain',
+    username: 'test',
+    password: 'testtest',
+  },
+})
+
+const topic = 'topic-test'
+const producer = kafka.producer()
+
+const getRandomNumber = () => Math.round(Math.random() * 1000)
+const createMessage = num => ({
+  key: `key-${num}`,
+  value: `value-${num}-${new Date().toISOString()}`,
+  headers: {
+    'correlation-id': `${num}-${Date.now()}`,
+  },
+})
+
+let msgNumber = 0
+let requestNumber = 0
+const sendMessage = () => {
+  const messages = Array(getRandomNumber())
+    .fill()
+    .map(_ => createMessage(getRandomNumber()))
+
+  const requestId = requestNumber++
+  msgNumber += messages.length
+  kafka.logger().info(`Sending ${messages.length} messages #${requestId}...`)
+  return producer
+    .send({
+      topic,
+      compression: CompressionTypes.GZIP,
+      messages,
+    })
+    .then(response => {
+      kafka.logger().info(`Messages sent #${requestId}`, {
+        response,
+        msgNumber,
+      })
+    })
+    .catch(e => kafka.logger().error(`[example/producer] ${e.message}`, { stack: e.stack }))
 }
 
-const t = async () => {
+let intervalId
+const run = async () => {
+  await producer.connect()
+  intervalId = setInterval(sendMessage, 3000)
+}
+
+run().catch(e => kafka.logger().error(`[example/producer] ${e.message}`, { stack: e.stack }))
+
+const errorTypes = ['unhandledRejection', 'uncaughtException']
+const signalTraps = ['SIGTERM', 'SIGINT', 'SIGUSR2']
+
+errorTypes.map(type => {
+  process.on(type, async e => {
     try {
-        const producer = new KafkaProducer({ "metadata.broker.list": "0.0.0.0:9094" }, "");
-
-        await producer.connect();
-
-        console.log("connected");
-
-        console.log("wait a little");
-        await later(200);
-
-        const topicName = "test223";
-
-        for (let index = 0; index < 10; index++) {
-            try {
-                const p1 = await producer.send(topicName, { message: `p1:${index}` }, 0, null);
-                const p2 = await producer.send(topicName, { message: `p2:${index}` }, 0, null);
-
-                console.log(`Loop ${index}: p1 offset = ${p1}, p2 offset = ${p2}`);
-            } catch (error) {
-                console.error(`Loop ${index} -> error`, error);
-                await later(5000);
-            }
-
-            await later(750);
-        }
-
-        await producer.disconnect();
-    } catch (error) {
-        console.log(error);
+      kafka.logger().info(`process.on ${type}`)
+      kafka.logger().error(e.message, { stack: e.stack })
+      await producer.disconnect()
+      process.exit(0)
+    } catch (_) {
+      process.exit(1)
     }
-};
+  })
+})
 
-t().catch((err) => {
-    console.error(err);
-});
+signalTraps.map(type => {
+  process.once(type, async () => {
+    console.log('')
+    kafka.logger().info('[example/producer] disconnecting')
+    clearInterval(intervalId)
+    await producer.disconnect()
+  })
+})
