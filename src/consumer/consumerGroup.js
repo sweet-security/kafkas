@@ -18,7 +18,6 @@ const {
   KafkaJSStaleTopicMetadataAssignment,
   isRebalancing,
 } = require('../errors')
-const { AssignerProtocol } = require('../../index')
 
 const { keys } = Object
 
@@ -114,6 +113,7 @@ module.exports = class ConsumerGroup {
     this.memberId = null
     this.members = null
     this.groupProtocol = null
+    this.currentAssignment = {}
 
     this.partitionsPerSubscribedTopic = null
     /**
@@ -219,24 +219,29 @@ module.exports = class ConsumerGroup {
 
       await this.cluster.refreshMetadata()
 
-      const currentAssignment = {}
-      const groupDescription = await this.coordinator.describeGroup()
-      groupDescription.members.forEach(member => {
-        const memberAssignment = AssignerProtocol.MemberAssignment.decode(member.memberAssignment)
+      assignment = await assigner.assign({
+        members,
+        topics: topicsSubscribed,
+        currentAssignment: this.currentAssignment,
+      })
+
+      this.currentAssignment = {}
+      assignment.forEach(member => {
+        const memberAssignment = MemberAssignment.decode(member.memberAssignment)
         if (memberAssignment) {
-          currentAssignment[member.memberId] = memberAssignment.assignment
+          this.currentAssignment[member.memberId] = memberAssignment.assignment
         }
       })
 
-      assignment = await assigner.assign({ members, topics: topicsSubscribed, currentAssignment })
-
-      this.logger.debug('Group assignment', {
-        groupId,
-        generationId,
-        groupProtocol,
-        assignment,
-        topics: topicsSubscribed,
-      })
+      this.logger.info(
+        `Group assignment: ${JSON.stringify({
+          groupId,
+          generationId,
+          groupProtocol,
+          assignment: this.currentAssignment,
+          topics: topicsSubscribed,
+        })}`
+      )
     }
 
     // Keep track of the partitions for the subscribed topics
@@ -252,7 +257,7 @@ module.exports = class ConsumerGroup {
     const decodedAssignment =
       decodedMemberAssignment != null ? decodedMemberAssignment.assignment : {}
 
-    this.logger.debug('Received assignment', {
+    this.logger.info(`Received assignment for ${memberId}: ${JSON.stringify(decodedAssignment)}`, {
       groupId,
       generationId,
       memberId,
@@ -261,6 +266,32 @@ module.exports = class ConsumerGroup {
 
     const assignedTopics = keys(decodedAssignment)
     const topicsNotSubscribed = arrayDiff(assignedTopics, topicsSubscribed)
+
+    if (this.groupProtocol === 'CooperativeStickyAssigner') {
+      const ownedTopicPartitions = this.assigned()
+      const ownedPartitions = ownedTopicPartitions.flatMap(ownedTopicPartitions =>
+        ownedTopicPartitions.partitions.map(
+          assignedTopicPartition => `${ownedTopicPartitions.topic}-${assignedTopicPartition}`
+        )
+      )
+
+      const assignedPartitions = Object.keys(decodedAssignment).flatMap(assignedTopic =>
+        decodedAssignment[assignedTopic].map(
+          assignedTopicPartition => `${assignedTopic}-${assignedTopicPartition}`
+        )
+      )
+
+      const revokedPartitions = arrayDiff(ownedPartitions, assignedPartitions)
+      if (revokedPartitions.length > 0) {
+        this.logger.info(
+          `Rejoining due to revoked partitions ${JSON.stringify({
+            ownedPartitions,
+            revokedPartitions,
+          })}`
+        )
+        this.joinAndSync()
+      }
+    }
 
     if (topicsNotSubscribed.length > 0) {
       const payload = {

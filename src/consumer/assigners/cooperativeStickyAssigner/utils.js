@@ -1,10 +1,10 @@
-export const hasImbalance = (assignment, avgPartitions) => {
+const hasImbalance = (assignment, avgPartitions) => {
   return Object.values(assignment).some(
     topicPartitions => Object.values(topicPartitions).flat().length > avgPartitions
   )
 }
 
-export const unloadOverloadedMembers = (assignment, avgPartitions) => {
+const unloadOverloadedMembers = (assignment, avgPartitions) => {
   const removedPartitions = []
   for (const memberId in assignment) {
     const partitionCount = getMemberAssignedPartitionCount(assignment, memberId)
@@ -31,11 +31,11 @@ export const unloadOverloadedMembers = (assignment, avgPartitions) => {
   return removedPartitions
 }
 
-export const getMemberAssignedPartitionCount = (assignment, memberId) => {
+const getMemberAssignedPartitionCount = (assignment, memberId) => {
   return Object.values(assignment[memberId] || {}).flat().length
 }
 
-export const getUnassignedPartitions = (currentAssignment, topicsPartitions) => {
+const getUnassignedPartitions = (currentAssignment, topicsPartitions) => {
   const assignedTopicPartitions = Object.values(currentAssignment)
   return topicsPartitions.filter(
     topicPartition =>
@@ -43,4 +43,11 @@ export const getUnassignedPartitions = (currentAssignment, topicsPartitions) => 
         assignedTopicPartition[topicPartition.topic]?.includes(topicPartition.partitionId)
       )
   )
+}
+
+module.exports = {
+  getUnassignedPartitions,
+  getMemberAssignedPartitionCount,
+  unloadOverloadedMembers,
+  hasImbalance
 }

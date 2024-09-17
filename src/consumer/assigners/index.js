@@ -1,7 +1,7 @@
 const roundRobin = require('./roundRobinAssigner')
-const stickyCooperative = require('./stickyCoopeartiveAssigner')
+const cooperativeSticky = require('./cooperativeStickyAssigner')
 
 module.exports = {
   roundRobin,
-  stickyCooperative
+  cooperativeSticky
 }

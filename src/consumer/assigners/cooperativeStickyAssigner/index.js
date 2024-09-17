@@ -1,11 +1,11 @@
-const { AssignerProtocol } = require('../../../../index')
+const { MemberMetadata, MemberAssignment } = require('../../assignerProtocol')
 const {
   hasImbalance,
   unloadOverloadedMembers,
   getUnassignedPartitions,
   getMemberAssignedPartitionCount,
 } = require('./utils')
-const { minBy, cloneDeep } = require('lodash')
+const { minBy } = require('lodash')
 
 /**
  * CooperativeStickyAssigner
@@ -16,13 +16,11 @@ module.exports = ({ cluster }) => ({
   version: 0,
   async assign({ members, topics, currentAssignment }) {
     const membersCount = members.length
-    const assignment = cloneDeep(currentAssignment)
+    const assignment = {}
 
     // // Initialize assignment map for each member
     for (const member of members) {
-      if (!assignment[member.memberId]) {
-        assignment[member.memberId] = {}
-      }
+      assignment[member.memberId] = currentAssignment[member.memberId] ?? {}
     }
 
     // Step 0: Fetch current partition metadata for topics
@@ -65,7 +63,7 @@ module.exports = ({ cluster }) => ({
   protocol({ topics }) {
     return {
       name: this.name,
-      metadata: AssignerProtocol.MemberMetadata.encode({
+      metadata: MemberMetadata.encode({
         version: this.version,
         topics: topics,
       }),
@@ -76,7 +74,7 @@ module.exports = ({ cluster }) => ({
 const encodeAssignment = (assignment, version) => {
   return Object.keys(assignment).map(memberId => ({
     memberId,
-    memberAssignment: AssignerProtocol.MemberAssignment.encode({
+    memberAssignment: MemberAssignment.encode({
       userData: Buffer.alloc(0),
       version,
       assignment: assignment[memberId],
