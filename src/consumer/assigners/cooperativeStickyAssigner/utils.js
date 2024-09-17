@@ -7,8 +7,8 @@ const hasImbalance = (assignment, avgPartitions) => {
 const unloadOverloadedMembers = (assignment, avgPartitions) => {
   const removedPartitions = []
   for (const memberId in assignment) {
-    const partitionCount = getMemberAssignedPartitionCount(assignment, memberId)
-    const partitionsToRemove = partitionCount - avgPartitions
+    const memberAssignedPartitionCount = getMemberAssignedPartitionCount(assignment, memberId)
+    const partitionsToRemove = memberAssignedPartitionCount - avgPartitions
 
     if (partitionsToRemove > 0) {
       let partitionsRemovedCount = 0

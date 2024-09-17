@@ -257,7 +257,7 @@ module.exports = class ConsumerGroup {
     const decodedAssignment =
       decodedMemberAssignment != null ? decodedMemberAssignment.assignment : {}
 
-    this.logger.info(`Received assignment for ${memberId}: ${JSON.stringify(decodedAssignment)}`, {
+    this.logger.info('Received member partition assignment', {
       groupId,
       generationId,
       memberId,
@@ -283,12 +283,10 @@ module.exports = class ConsumerGroup {
 
       const revokedPartitions = arrayDiff(ownedPartitions, assignedPartitions)
       if (revokedPartitions.length > 0) {
-        this.logger.info(
-          `Rejoining due to revoked partitions ${JSON.stringify({
-            ownedPartitions,
-            revokedPartitions,
-          })}`
-        )
+        this.logger.info('`Rejoining due to revoked partitions', {
+          ownedPartitions,
+          revokedPartitions,
+        })
         this.joinAndSync()
       }
     }
