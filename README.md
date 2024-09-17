@@ -2,6 +2,6 @@
 
 # Simple kafka promise
 
-A node-rdkafka decorator with promise/await API.
+A KafkaJS based library with coopeartive sticky assigner support.
 
-This library is fully written in TypeScript.
+This library is fully written in JavaScript.
