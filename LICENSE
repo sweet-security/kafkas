@@ -1,7 +1,7 @@
 MIT License
 
-Includes code from @s3pweb/simple-kafka-promise
-Copyright for portions of project Foo are held by [S3pweb, 2020] as part of project @s3pweb/simple-kafka-promise.
+Includes code from kafkajs
+Copyright for portions of project Foo are held by [tulios, 2023] as part of project kafkajs.
 All other copyright for project @sweet-security/kafkas are held by [Sweet Security, 2024].
 
 Copyright (c) 2024 sweet security
