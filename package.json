@@ -1,6 +1,6 @@
 {
   "name": "@sweet-security/kafkas",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "An kafkajs decorator with cooperative sticky assigner support",
   "main": "index.js",
   "types": "types/index.d.ts",
