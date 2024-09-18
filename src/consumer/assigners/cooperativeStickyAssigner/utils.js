@@ -21,15 +21,15 @@ const unloadOverloadedMembers = (assignment, avgPartitions) => {
         'desc'
       )
 
-      for (const topic in sortedAssignedTopics) {
-        const removedPartitionId = sortedAssignedTopics[topic].pop()
+      for (const [topic, partitions] of sortedAssignedTopics) {
+        const removedPartitionId = partitions.pop()
         partitionsRemovedCount++
 
         if (removedPartitionId !== undefined) {
           removedPartitions.push({ partitionId: removedPartitionId, topic })
         }
 
-        if (sortedAssignedTopics[topic].length === 0) {
+        if (partitions.length === 0) {
           delete assignment[memberId][topic]
         }
 
