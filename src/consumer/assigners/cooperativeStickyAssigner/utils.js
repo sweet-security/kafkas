@@ -1,3 +1,4 @@
+const { orderBy } = require('lodash')
 const hasImbalance = (assignment, avgPartitions) => {
   return Object.values(assignment).some(
     topicPartitions => Object.values(topicPartitions).flat().length > avgPartitions
@@ -12,17 +13,28 @@ const unloadOverloadedMembers = (assignment, avgPartitions) => {
 
     if (partitionsToRemove > 0) {
       let partitionsRemovedCount = 0
-      while (partitionsRemovedCount < partitionsToRemove) {
-        for (const topic in assignment[memberId]) {
-          const removedPartitionId = assignment[memberId][topic].pop()
-          if (removedPartitionId !== undefined) {
-            removedPartitions.push({ partitionId: removedPartitionId, topic })
-          }
+      
+      // Sort by partition count
+      const sortedAssignedTopics = orderBy(
+        Object.entries(assignment[memberId]),
+        [([_, assignedTopicPartitions]) => assignedTopicPartitions.length],
+        'desc'
+      )
 
-          if (assignment[memberId][topic].length === 0) {
-            delete assignment[memberId][topic]
-          }
-          partitionsRemovedCount++
+      for (const topic in sortedAssignedTopics) {
+        const removedPartitionId = sortedAssignedTopics[topic].pop()
+        partitionsRemovedCount++
+
+        if (removedPartitionId !== undefined) {
+          removedPartitions.push({ partitionId: removedPartitionId, topic })
+        }
+
+        if (sortedAssignedTopics[topic].length === 0) {
+          delete assignment[memberId][topic]
+        }
+
+        if (partitionsRemovedCount > partitionsToRemove) {
+          break
         }
       }
     }
@@ -49,5 +61,5 @@ module.exports = {
   getUnassignedPartitions,
   getMemberAssignedPartitionCount,
   unloadOverloadedMembers,
-  hasImbalance
+  hasImbalance,
 }
