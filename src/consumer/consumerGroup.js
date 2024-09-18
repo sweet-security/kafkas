@@ -233,15 +233,13 @@ module.exports = class ConsumerGroup {
         }
       })
 
-      this.logger.info(
-        `Group assignment: ${JSON.stringify({
-          groupId,
-          generationId,
-          groupProtocol,
-          assignment: this.currentAssignment,
-          topics: topicsSubscribed,
-        })}`
-      )
+      this.logger.info('Group assignment', {
+        groupId,
+        generationId,
+        groupProtocol,
+        assignment: this.currentAssignment,
+        topics: topicsSubscribed,
+      })
     }
 
     // Keep track of the partitions for the subscribed topics
@@ -287,7 +285,7 @@ module.exports = class ConsumerGroup {
           ownedPartitions,
           revokedPartitions,
         })
-        this.joinAndSync()
+        await this[PRIVATE.SYNC]()
       }
     }
 
