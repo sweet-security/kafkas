@@ -39,10 +39,10 @@ module.exports = ({ cluster }) => ({
       unloadOverloadedMembers(assignment, avgPartitions)
     }
     // Step 2: If not already assigned, distribute using round-robin balancing
-    const unassignedPartitions = getUnassignedPartitions(currentAssignment, topicsPartitions)
+    const unassignedPartitions = getUnassignedPartitions(assignment, topicsPartitions)
     for (const unassignedPartition of unassignedPartitions) {
       const memberWithLeastPartitions = minBy(members, member =>
-        getMemberAssignedPartitionCount(currentAssignment, member.memberId)
+        getMemberAssignedPartitionCount(assignment, member.memberId)
       )?.memberId
 
       if (!memberWithLeastPartitions) {
