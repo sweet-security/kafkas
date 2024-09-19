@@ -265,30 +265,6 @@ module.exports = class ConsumerGroup {
     const assignedTopics = keys(decodedAssignment)
     const topicsNotSubscribed = arrayDiff(assignedTopics, topicsSubscribed)
 
-    if (this.groupProtocol === 'CooperativeStickyAssigner') {
-      const ownedTopicPartitions = this.assigned()
-      const ownedPartitions = ownedTopicPartitions.flatMap(ownedTopicPartitions =>
-        ownedTopicPartitions.partitions.map(
-          assignedTopicPartition => `${ownedTopicPartitions.topic}-${assignedTopicPartition}`
-        )
-      )
-
-      const assignedPartitions = Object.keys(decodedAssignment).flatMap(assignedTopic =>
-        decodedAssignment[assignedTopic].map(
-          assignedTopicPartition => `${assignedTopic}-${assignedTopicPartition}`
-        )
-      )
-
-      const revokedPartitions = arrayDiff(ownedPartitions, assignedPartitions)
-      if (revokedPartitions.length > 0) {
-        this.logger.info('`Rejoining due to revoked partitions', {
-          ownedPartitions,
-          revokedPartitions,
-        })
-        await this[PRIVATE.SYNC]()
-      }
-    }
-
     if (topicsNotSubscribed.length > 0) {
       const payload = {
         groupId,
@@ -364,6 +340,27 @@ module.exports = class ConsumerGroup {
       generationId,
       memberId,
     })
+
+    if (this.groupProtocol === 'CooperativeStickyAssigner') {
+      const ownedTopicPartitions = this.assigned()
+      const ownedPartitions = ownedTopicPartitions.flatMap(ownedTopicPartitions =>
+        ownedTopicPartitions.partitions.map(
+          assignedTopicPartition => `${ownedTopicPartitions.topic}-${assignedTopicPartition}`
+        )
+      )
+
+      const assignedPartitions = Object.keys(decodedAssignment).flatMap(assignedTopic =>
+        decodedAssignment[assignedTopic].map(
+          assignedTopicPartition => `${assignedTopic}-${assignedTopicPartition}`
+        )
+      )
+
+      const revokedPartitions = arrayDiff(ownedPartitions, assignedPartitions)
+      if (revokedPartitions.length > 0) {
+        this.logger.info('Rejoining due to revoked partitions', { revokedPartitions })
+        this.joinAndSync()
+      }
+    }
   }
 
   joinAndSync() {
