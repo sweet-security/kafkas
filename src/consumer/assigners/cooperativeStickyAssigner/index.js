@@ -1,11 +1,12 @@
 const { MemberMetadata, MemberAssignment } = require('../../assignerProtocol')
 const {
+  extractTopicPartitions,
+  calculateAvgPartitions,
   hasImbalance,
   unloadOverloadedMembers,
   getUnassignedPartitions,
-  getMemberAssignedPartitionCount,
+  assignUnassignedPartitions,
 } = require('./utils')
-const { minBy } = require('lodash')
 
 /**
  * CooperativeStickyAssigner
@@ -15,7 +16,6 @@ module.exports = ({ cluster }) => ({
   name: 'CooperativeStickyAssigner',
   version: 0,
   async assign({ members, topics, currentAssignment }) {
-    const membersCount = members.length
     const assignment = {}
 
     // // Initialize assignment map for each member
@@ -24,38 +24,17 @@ module.exports = ({ cluster }) => ({
     }
 
     // Step 0: Fetch current partition metadata for topics
-    const topicsPartitions = topics.flatMap(topic => {
-      const partitionsMetadata = cluster.findTopicPartitionMetadata(topic)
-      return partitionsMetadata.map(partitionMetadata => ({
-        topic,
-        partitionId: partitionMetadata.partitionId,
-      }))
-    })
+    const topicsPartitions = extractTopicPartitions(topics, cluster)
 
     // Step 1: Detect imbalance and redistribute partitions if necessary
-    const totalPartitions = topicsPartitions.length
-    const avgPartitions = Math.ceil(totalPartitions / membersCount)
+    const avgPartitions = calculateAvgPartitions(topicsPartitions.length, members.length)
     if (hasImbalance(assignment, avgPartitions)) {
       unloadOverloadedMembers(assignment, avgPartitions)
     }
+
     // Step 2: If not already assigned, distribute using round-robin balancing
     const unassignedPartitions = getUnassignedPartitions(assignment, topicsPartitions)
-    for (const unassignedPartition of unassignedPartitions) {
-      const memberWithLeastPartitions = minBy(members, member =>
-        getMemberAssignedPartitionCount(assignment, member.memberId)
-      )?.memberId
-
-      if (!memberWithLeastPartitions) {
-        continue
-      }
-
-      if (!assignment[memberWithLeastPartitions][unassignedPartition.topic]) {
-        assignment[memberWithLeastPartitions][unassignedPartition.topic] = []
-      }
-      assignment[memberWithLeastPartitions][unassignedPartition.topic].push(
-        unassignedPartition.partitionId
-      )
-    }
+    assignUnassignedPartitions(assignment, unassignedPartitions, members)
 
     return encodeAssignment(assignment, this.version)
   },
