@@ -3,7 +3,6 @@ module.exports = {
   moduleNameMapper: {
     testHelpers: '<rootDir>/testHelpers/index.js',
   },
-  setupFilesAfterEnv: ['<rootDir>/testHelpers/setup.js'],
   testPathIgnorePatterns: ['/node_modules/'],
   testRunner: 'jest-circus/runner',
   testEnvironment: 'node',
