@@ -4,7 +4,7 @@ const {
   calculateAvgPartitions,
   hasImbalance,
   unloadOverloadedMembers,
-  getUnassignedPartitions,
+  getUnassignedPartitionsByTopic,
   assignUnassignedPartitions,
 } = require('./utils')
 
@@ -32,9 +32,9 @@ module.exports = ({ cluster }) => ({
       unloadOverloadedMembers(assignment, avgPartitions)
     }
 
-    // Step 2: If not already assigned, distribute using round-robin balancing
-    const unassignedPartitions = getUnassignedPartitions(assignment, topicsPartitions)
-    assignUnassignedPartitions(assignment, unassignedPartitions, members)
+    // Step 2: If not already assigned, distribute using topic aware load balancing between the members
+    const unassignedPartitionsByTopic = getUnassignedPartitionsByTopic(assignment, topicsPartitions)
+    assignUnassignedPartitions(assignment, unassignedPartitionsByTopic, members)
 
     return encodeAssignment(assignment, this.version)
   },

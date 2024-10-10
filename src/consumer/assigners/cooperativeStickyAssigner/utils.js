@@ -1,4 +1,5 @@
-const { maxBy, minBy } = require('lodash')
+const { maxBy, minBy, filter } = require('lodash')
+const { INT_32_MAX_VALUE } = require('../../../constants')
 
 const extractTopicPartitions = (topics, cluster) => {
   return topics.flatMap(topic => {
@@ -11,7 +12,7 @@ const extractTopicPartitions = (topics, cluster) => {
 }
 
 const calculateAvgPartitions = (topicsPartitionsCount, membersCount) => {
-  return Math.ceil(topicsPartitionsCount / membersCount);
+  return Math.ceil(topicsPartitionsCount / membersCount)
 }
 
 const hasImbalance = (assignment, avgPartitions) => {
@@ -20,31 +21,91 @@ const hasImbalance = (assignment, avgPartitions) => {
   )
 }
 
+// Find the topic with the largest partition count in the member assignment
+const getTopicWithMostPartitionsFromMemberAssignment = (
+  currentMemberAssignment,
+  removedPartitions
+) => {
+  const topicsByPartitionsCount = {}
+
+  for (const topic in currentMemberAssignment) {
+    const topicPartitionCount = currentMemberAssignment[topic].length
+    if (!topicsByPartitionsCount[topicPartitionCount]) {
+      topicsByPartitionsCount[topicPartitionCount] = [topic]
+    } else {
+      topicsByPartitionsCount[topicPartitionCount].push(topic)
+    }
+  }
+
+  const topicWithMostPartitionsPartitionCount = Math.max(
+    ...Object.keys(topicsByPartitionsCount).map(parseInt)
+  )
+
+  if (topicsByPartitionsCount[topicWithMostPartitionsPartitionCount].length === 1) {
+    return topicsByPartitionsCount[topicWithMostPartitionsPartitionCount][0]
+  }
+
+  // If more than one topic with same partitions amount, remove partition from topic that removedPartitions has less of
+  // e.g: removedPartitions = {a: [1,2], b: [1]}, memberAssignment = {a: [3,4], b: [3,4]} ==> removedPartitions = {a: [1,2], b: [1, 3]}, memberAssignment = {a: [3,4], b: [4]}
+  return minBy(topicsByPartitionsCount[topicWithMostPartitionsPartitionCount], [
+    assignedTopic => removedPartitions[assignedTopic].length ?? INT_32_MAX_VALUE,
+  ])
+}
+
+const getMemberIdToAssignPartitionTo = (members, assignment, topicWithMostUnassignedPartitions) => {
+  const membersByAssignedPartitionsCount = {}
+
+  for (const member of members) {
+    const memberAssignedPartitionsCount = getMemberAssignedPartitionCount(
+      assignment,
+      member.memberId
+    )
+    if (!membersByAssignedPartitionsCount[memberAssignedPartitionsCount]) {
+      membersByAssignedPartitionsCount[memberAssignedPartitionsCount] = [member]
+    } else {
+      membersByAssignedPartitionsCount[memberAssignedPartitionsCount].push(member)
+    }
+  }
+
+  const leastAssignedPartitionsCount = Math.min(
+    ...Object.keys(membersByAssignedPartitionsCount).map(parseInt)
+  )
+
+  if (membersByAssignedPartitionsCount[leastAssignedPartitionsCount].length === 1) {
+    return membersByAssignedPartitionsCount[leastAssignedPartitionsCount][0]
+  }
+  // Amongst the members with the least assigned partitions, find the one with the least amount of partitions assigned to it from the topic with most unassigned partitions
+  return minBy(
+    membersByAssignedPartitionsCount[leastAssignedPartitionsCount],
+    member => assignment[member.memberId][topicWithMostUnassignedPartitions].length
+  )
+}
+
 const unloadOverloadedMembers = (assignment, avgPartitions) => {
-  const removedPartitions = []
+  const removedPartitions = {}
   for (const memberId in assignment) {
     const memberAssignedPartitionCount = getMemberAssignedPartitionCount(assignment, memberId)
-    const partitionsToRemove = memberAssignedPartitionCount - avgPartitions
 
-    if (partitionsToRemove > 0) {
-      let partitionsRemovedCount = 0
+    let partitionsToRemove = memberAssignedPartitionCount - avgPartitions
+    while (partitionsToRemove > 0) {
+      const topicWithMostPartitions = getTopicWithMostPartitionsFromMemberAssignment(
+        assignment[memberId],
+        removedPartitions
+      )
 
-      while (partitionsRemovedCount < partitionsToRemove) {
-        // Find the topic with the largest partition count in the member assignment
-        const [topicWithMostPartitions, partitions] = maxBy(Object.entries(assignment[memberId]), [
-          ([_, assignedTopicPartitions]) => assignedTopicPartitions.length,
-        ])
+      const removedPartitionId = assignment[memberId][topicWithMostPartitions].pop()
+      partitionsToRemove--
 
-        const removedPartitionId = partitions.pop()
-        partitionsRemovedCount++
-
-        if (removedPartitionId !== undefined) {
-          removedPartitions.push({ partitionId: removedPartitionId, topic: topicWithMostPartitions })
+      if (removedPartitionId !== undefined) {
+        if (!removedPartitions[topicWithMostPartitions]) {
+          removedPartitions[topicWithMostPartitions] = [removedPartitionId]
+        } else {
+          removedPartitions[topicWithMostPartitions].push(removedPartitionId)
         }
+      }
 
-        if (partitions.length === 0) {
-          delete assignment[memberId][topicWithMostPartitions]
-        }
+      if (assignment[memberId][topicWithMostPartitions].length === 0) {
+        delete assignment[memberId][topicWithMostPartitions]
       }
     }
   }
@@ -52,22 +113,32 @@ const unloadOverloadedMembers = (assignment, avgPartitions) => {
   return removedPartitions
 }
 
-const assignUnassignedPartitions = (assignment, unassignedPartitions, members) => {
-  for (const unassignedPartition of unassignedPartitions) {
-    const memberWithLeastPartitions = minBy(members, member =>
-      getMemberAssignedPartitionCount(assignment, member.memberId)
-    )?.memberId
-
-    if (!memberWithLeastPartitions) {
-      continue
-    }
-
-    if (!assignment[memberWithLeastPartitions][unassignedPartition.topic]) {
-      assignment[memberWithLeastPartitions][unassignedPartition.topic] = []
-    }
-    assignment[memberWithLeastPartitions][unassignedPartition.topic].push(
-      unassignedPartition.partitionId
+const assignUnassignedPartitions = (assignment, unassignedPartitionsByTopic, members) => {
+  while (Object.keys(unassignedPartitionsByTopic).length) {
+    const topicWithMostUnassignedPartitions = maxBy(
+      Object.keys(unassignedPartitionsByTopic),
+      topic => unassignedPartitionsByTopic[topic].length
     )
+
+    const partitionToAssign = unassignedPartitionsByTopic[topicWithMostUnassignedPartitions].pop()
+
+    const memberWithLeastPartitions = getMemberIdToAssignPartitionTo(
+      members,
+      assignment,
+      topicWithMostUnassignedPartitions
+    ).memberId
+
+    if (!assignment[memberWithLeastPartitions][topicWithMostUnassignedPartitions]) {
+      assignment[memberWithLeastPartitions][topicWithMostUnassignedPartitions] = [partitionToAssign]
+    } else {
+      assignment[memberWithLeastPartitions][topicWithMostUnassignedPartitions].push(
+        partitionToAssign
+      )
+    }
+
+    if (unassignedPartitionsByTopic[topicWithMostUnassignedPartitions].length === 0) {
+      delete unassignedPartitionsByTopic[memberWithLeastPartitions]
+    }
   }
 }
 
@@ -75,20 +146,32 @@ const getMemberAssignedPartitionCount = (assignment, memberId) => {
   return Object.values(assignment[memberId] || {}).flat().length
 }
 
-const getUnassignedPartitions = (currentAssignment, topicsPartitions) => {
+const getUnassignedPartitionsByTopic = (currentAssignment, topicsPartitions) => {
   const assignedTopicPartitions = Object.values(currentAssignment)
-  return topicsPartitions.filter(
-    topicPartition =>
-      !assignedTopicPartitions.some(assignedTopicPartition =>
-        assignedTopicPartition[topicPartition.topic]?.includes(topicPartition.partitionId)
-      )
-  )
+  const unassignedPartitionsByTopic = {}
+  for (const topicPartition of topicsPartitions) {
+    const isPartitionAssigned = assignedTopicPartitions.some(assignedTopicPartition =>
+      assignedTopicPartition[topicPartition.topic]?.includes(topicPartition.partitionId)
+    )
+
+    if (isPartitionAssigned) {
+      continue
+    }
+
+    if (!unassignedPartitionsByTopic[topicPartition.topic]) {
+      unassignedPartitionsByTopic[topicPartition.topic] = [topicPartition.partitionId]
+    } else {
+      unassignedPartitionsByTopic[topicPartition.topic].push(topicPartition.partitionId)
+    }
+  }
+
+  return unassignedPartitionsByTopic
 }
 
 module.exports = {
   extractTopicPartitions,
   calculateAvgPartitions,
-  getUnassignedPartitions,
+  getUnassignedPartitionsByTopic,
   unloadOverloadedMembers,
   hasImbalance,
   assignUnassignedPartitions,
