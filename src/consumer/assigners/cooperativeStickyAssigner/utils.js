@@ -77,8 +77,7 @@ const getMemberIdToAssignPartitionTo = (members, assignment, topicWithMostUnassi
   // Amongst the members with the least assigned partitions, find the one with the least amount of partitions assigned to it from the topic with most unassigned partitions
   return minBy(
     membersByAssignedPartitionsCount[leastAssignedPartitionsCount],
-    member => assignment[member.memberId][topicWithMostUnassignedPartitions].length
-  )
+    member => assignment[member.memberId][topicWithMostUnassignedPartitions]?.length ?? 0  )
 }
 
 const unloadOverloadedMembers = (assignment, avgPartitions) => {
