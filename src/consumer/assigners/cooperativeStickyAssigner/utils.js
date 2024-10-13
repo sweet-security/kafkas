@@ -38,7 +38,7 @@ const getTopicWithMostPartitionsFromMemberAssignment = (
   }
 
   const topicWithMostPartitionsPartitionCount = Math.max(
-    ...Object.keys(topicsByPartitionsCount).map(parseInt)
+    ...Object.keys(topicsByPartitionsCount).map(partitionCount => parseInt(partitionCount))
   )
 
   if (topicsByPartitionsCount[topicWithMostPartitionsPartitionCount].length === 1) {
@@ -68,7 +68,7 @@ const getMemberIdToAssignPartitionTo = (members, assignment, topicWithMostUnassi
   }
 
   const leastAssignedPartitionsCount = Math.min(
-    ...Object.keys(membersByAssignedPartitionsCount).map(parseInt)
+    ...Object.keys(membersByAssignedPartitionsCount).map(partitionCount => parseInt(partitionCount))
   )
 
   if (membersByAssignedPartitionsCount[leastAssignedPartitionsCount].length === 1) {
@@ -137,7 +137,7 @@ const assignUnassignedPartitions = (assignment, unassignedPartitionsByTopic, mem
     }
 
     if (unassignedPartitionsByTopic[topicWithMostUnassignedPartitions].length === 0) {
-      delete unassignedPartitionsByTopic[memberWithLeastPartitions]
+      delete unassignedPartitionsByTopic[topicWithMostUnassignedPartitions]
     }
   }
 }
