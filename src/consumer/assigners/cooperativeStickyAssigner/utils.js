@@ -48,7 +48,7 @@ const getTopicWithMostPartitionsFromMemberAssignment = (
   // If more than one topic with same partitions amount, remove partition from topic that removedPartitions has less of
   // e.g: removedPartitions = {a: [1,2], b: [1]}, memberAssignment = {a: [3,4], b: [3,4]} ==> removedPartitions = {a: [1,2], b: [1, 3]}, memberAssignment = {a: [3,4], b: [4]}
   return minBy(topicsByPartitionsCount[topicWithMostPartitionsPartitionCount], [
-    assignedTopic => removedPartitions[assignedTopic].length ?? INT_32_MAX_VALUE,
+    assignedTopic => removedPartitions[assignedTopic]?.length ?? INT_32_MAX_VALUE,
   ])
 }
 
